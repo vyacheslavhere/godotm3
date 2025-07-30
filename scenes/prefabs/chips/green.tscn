@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://d2e8orvkx7kl7"]
+
+[ext_resource type="Texture2D" uid="uid://c2d8qei1xq46o" path="res://sprites/chips-02.png" id="1_6tfw3"]
+[ext_resource type="Script" uid="uid://snb2vfxaphsm" path="res://scripts/chip.gd" id="2_0p8a7"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2hlmj"]
+atlas = ExtResource("1_6tfw3")
+region = Rect2(44, 647, 239, 252)
+
+[node name="Green" type="Sprite2D"]
+scale = Vector2(0.186192, 0.186192)
+texture = SubResource("AtlasTexture_2hlmj")
+script = ExtResource("2_0p8a7")

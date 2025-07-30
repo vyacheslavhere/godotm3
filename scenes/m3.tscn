@@ -1,0 +1,35 @@
+[gd_scene load_steps=10 format=3 uid="uid://co7nhextgax2s"]
+
+[ext_resource type="Script" uid="uid://bl0h80uan17ny" path="res://scripts/board.gd" id="1_1va2j"]
+[ext_resource type="PackedScene" uid="uid://bglwhn14ct0ts" path="res://scenes/prefabs/tile.tscn" id="2_ikrw4"]
+[ext_resource type="PackedScene" uid="uid://m01u3edhtd3m" path="res://scenes/prefabs/chips/blue.tscn" id="3_o24bc"]
+[ext_resource type="PackedScene" uid="uid://d2e8orvkx7kl7" path="res://scenes/prefabs/chips/green.tscn" id="4_604la"]
+[ext_resource type="PackedScene" uid="uid://d3ucx1qn3mrlo" path="res://scenes/prefabs/chips/purple.tscn" id="5_u36m5"]
+[ext_resource type="PackedScene" uid="uid://dlijrfienlpwd" path="res://scenes/prefabs/chips/red.tscn" id="6_k5j23"]
+[ext_resource type="PackedScene" uid="uid://dmvl5o4khavoo" path="res://scenes/prefabs/chips/yellow.tscn" id="7_4ohyr"]
+[ext_resource type="Script" uid="uid://cs4vqqbjjced4" path="res://scripts/random.gd" id="8_o24bc"]
+[ext_resource type="Script" uid="uid://bbpg716mwl40m" path="res://scripts/input.gd" id="9_604la"]
+
+[node name="M3" type="Node2D"]
+
+[node name="Board" type="Node2D" parent="."]
+script = ExtResource("1_1va2j")
+prefabs = {
+"blue_chip": ExtResource("3_o24bc"),
+"green_chip": ExtResource("4_604la"),
+"purple_chip": ExtResource("5_u36m5"),
+"red_chip": ExtResource("6_k5j23"),
+"tile": ExtResource("2_ikrw4"),
+"yellow_chip": ExtResource("7_4ohyr")
+}
+board_offset = Vector2(500, 250)
+cell_offset = Vector2(60, 60)
+fall_tween_duration = 0.25
+
+[node name="BoardInput" type="Node2D" parent="Board"]
+script = ExtResource("9_604la")
+metadata/_custom_type_script = "uid://bbpg716mwl40m"
+
+[node name="Random" type="Node" parent="Board"]
+script = ExtResource("8_o24bc")
+metadata/_custom_type_script = "uid://cs4vqqbjjced4"

@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://bglwhn14ct0ts"]
+
+[ext_resource type="Texture2D" uid="uid://c2d8qei1xq46o" path="res://sprites/chips-02.png" id="1_h8k6f"]
+[ext_resource type="Script" uid="uid://bt2rolif6s2w7" path="res://scripts/tile.gd" id="2_xt6qx"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co6i0"]
+atlas = ExtResource("1_h8k6f")
+region = Rect2(354, 1236, 271, 264)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xt6qx"]
+size = Vector2(271.598, 261.539)
+
+[node name="Tile" type="Sprite2D"]
+z_index = -1
+scale = Vector2(0.198823, 0.198823)
+texture = SubResource("AtlasTexture_co6i0")
+script = ExtResource("2_xt6qx")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0, -3.29766e-06)
+shape = SubResource("RectangleShape2D_xt6qx")

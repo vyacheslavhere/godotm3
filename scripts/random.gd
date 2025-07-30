@@ -10,8 +10,8 @@ var seeded_randomizer = RandomNumberGenerator.new()
 
 # setting up seed
 func _ready() -> void:
-	seeded_randomizer.seed = -620291218619724930
-
+	seeded_randomizer.seed = Time.get_unix_time_from_system()
+	
 # getting random range
 func range(a: int, b: int) -> int:
 	return seeded_randomizer.randi_range(a, b)

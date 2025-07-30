@@ -169,19 +169,24 @@ func swap_chips(a: Chip, b: Chip):
 	tile_b.chip = a
 	
 	# visual swapping
-	var tween = create_tween()
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(a, "position", b.position, swap_tween_duration)
-	tween.tween_property(b, "position", a.position, swap_tween_duration)
-		
-	# callback
-	tween.tween_callback(
+	var tween_a = create_tween()
+	tween_a.set_ease(Tween.EASE_IN_OUT)
+	tween_a.set_trans(Tween.TRANS_QUAD)
+	tween_a.tween_property(a, "position", b.position, swap_tween_duration)	
+	tween_a.tween_callback(
 		func():
-			a.is_buse = false
+			a.is_busy = false
+			self.enqueue_match(a.find_match(false))
+	)
+	
+	var tween_b = create_tween()
+	tween_b.set_ease(Tween.EASE_IN_OUT)
+	tween_b.set_trans(Tween.TRANS_QUAD)
+	tween_b.tween_property(b, "position", a.position, swap_tween_duration)	
+	tween_b.tween_callback(
+		func():
 			b.is_busy = false
-			self.enqueue_match(a.find_match(false))
-			self.enqueue_match(a.find_match(false))
+			self.enqueue_match(b.find_match(false))
 	)
 	
 # fakely swaps two chips
@@ -202,7 +207,7 @@ func fake_swap_chips(a: Chip, b: Chip):
 	# callback
 	tween.tween_callback(
 		func():
-			a.is_buse = false
+			a.is_busy = false
 			b.is_busy = false
 	)
 	

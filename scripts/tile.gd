@@ -78,5 +78,18 @@ func is_flow_stable() -> bool:
 # deletes chip
 func delete_chip():
 	if !chip.is_busy:
-		chip.queue_free()
-		chip = null
+		chip.is_busy = true
+		var tween = create_tween()
+		tween.set_ease(Tween.EASE_IN_OUT)
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.tween_property(
+			chip, 
+			"scale", 
+			chip.scale * board.die_tween_scale_factor,
+			board.die_tween_duration
+		)
+		tween.tween_callback(
+			func():
+				chip.queue_free()
+				chip = null	
+		)

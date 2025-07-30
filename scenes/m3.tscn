@@ -25,6 +25,8 @@ prefabs = {
 board_offset = Vector2(500, 250)
 cell_offset = Vector2(60, 60)
 fall_tween_duration = 0.125
+die_tween_duration = 0.075
+die_tween_scale_factor = 0.8
 
 [node name="BoardInput" type="Node2D" parent="Board"]
 script = ExtResource("9_604la")

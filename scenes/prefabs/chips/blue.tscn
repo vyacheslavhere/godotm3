@@ -11,3 +11,5 @@ region = Rect2(47, 363, 232, 227)
 scale = Vector2(0.198823, 0.198823)
 texture = SubResource("AtlasTexture_neyfe")
 script = ExtResource("2_etura")
+is_fall_enabled = true
+is_swap_enabled = true

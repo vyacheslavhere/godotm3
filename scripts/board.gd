@@ -43,6 +43,8 @@ var height: int
 @export var cell_offset: Vector2
 # tween durations
 @export var fall_tween_duration: float
+@export var die_tween_duration: float
+@export var die_tween_scale_factor: float
 # matches array, contains matches
 @export var matches: Array
 # randomization
@@ -125,7 +127,6 @@ func instantiate_prefab(name: String) -> Node2D:
 	add_child(node)
 	return node
 	
-
 # gets random chip
 func random_chip() -> String:
 	return random.choice(
@@ -189,7 +190,6 @@ func check_match_valid(m) -> bool:
 
 # completes match
 func complete_match(m):
-	print("complete match: " + str(m))
 	for tile in m["tail"]:
 		tile.delete_chip()
 	m["source"].delete_chip()
@@ -210,6 +210,14 @@ func tick():
 		tile.tick()
 	# ticking matches
 	if matches.size() > 0:
+		# sorting matches
+		matches.sort_custom(
+			func(a,b):
+				if a['tail'].size() > b['tail'].size():
+					return true
+				return false
+		)
+		# processing matches
 		var pending = []
 		for m in self.matches:
 			if check_match(m):

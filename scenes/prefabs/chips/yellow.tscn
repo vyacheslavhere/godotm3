@@ -11,3 +11,5 @@ region = Rect2(16, 950, 267, 260)
 scale = Vector2(0.198823, 0.198823)
 texture = SubResource("AtlasTexture_tdmkg")
 script = ExtResource("2_vktcr")
+is_fall_enabled = true
+is_swap_enabled = true

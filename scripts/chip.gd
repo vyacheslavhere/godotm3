@@ -8,6 +8,11 @@ var tile: Tile
 var kind: String
 var is_busy: bool
 
+# settings
+@export var is_fall_enabled: bool
+@export var is_swap_enabled: bool
+@export var is_break_arrows: bool
+
 # init
 func init(board: Board, tile: Tile, kind: String):
 	self.board = board
@@ -60,6 +65,7 @@ func can_fall() -> bool:
 
 # falls, if can
 func try_fall() -> void:
+	if !is_fall_enabled: return
 	if is_busy: return
 	else:
 		if can_fall_down():
@@ -130,7 +136,6 @@ func find_horizontal_matchables():
 	var tiles = []
 	
 	for x in range(self.tile.x + 1, board.width + 1):
-		print('x: ' + str(x))				
 		var tile = self.board.tile_at(x, self.tile.y)
 		if tile == null: break
 		if tile.chip == null: break		
@@ -138,7 +143,6 @@ func find_horizontal_matchables():
 		else: break
 			
 	for x in range(self.tile.x - 1, -1, -1):
-		print('x: ' + str(x))		
 		var tile = self.board.tile_at(x, self.tile.y)
 		if tile == null: break
 		if tile.chip == null: break		
@@ -169,11 +173,11 @@ func find_vertical_matchables():
 
 # find match
 func find_match(pending: bool):
-	print("-- finding match --")	
-	print("tile: " + str(self.tile.x) + ", " + str(self.tile.y))
-	print("kind: " + str(self.kind))
+	if self.kind not in board.chip_groups['chips']: return
+	
 	var horizontal = find_horizontal_matchables()	
 	var vertical = find_vertical_matchables()
+	
 	if horizontal.size() == 4:
 		return {"tail": horizontal, "source": self.tile, "is_pending": pending, "out": "color_bomb"}
 	elif vertical.size() == 4:

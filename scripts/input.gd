@@ -5,13 +5,9 @@ extends Node2D
 # selected tile
 @export var selected: Tile;
 # match3 board
-@export var board: Board;
+@onready var board: Board = get_node("/root/M3/Board") as Board;
 # last mouse position
 @export var last_mouse_position: Vector2
-
-# initialization
-func _ready():
-	self.board = get_node("/root/M3/Board") as Board
 
 # input
 func _input(event: InputEvent) -> void:
@@ -69,7 +65,7 @@ func _input(event: InputEvent) -> void:
 				)
 				if tile != null:
 					if tile.chip != null: 
-						board.swap_chips(
+						board.input(
 							self.selected.chip,
 							tile.chip
 						)
@@ -81,7 +77,7 @@ func _input(event: InputEvent) -> void:
 				)
 				if tile != null:
 					if tile.chip != null: 
-						board.swap_chips(
+						board.input(
 							self.selected.chip,
 							tile.chip
 						)
@@ -95,7 +91,7 @@ func _input(event: InputEvent) -> void:
 				)
 				if tile != null:
 					if tile.chip != null: 
-						board.swap_chips(
+						board.input(
 							self.selected.chip,
 							tile.chip
 						)
@@ -107,7 +103,7 @@ func _input(event: InputEvent) -> void:
 				)
 				if tile != null:
 					if tile.chip != null: 
-						board.swap_chips(
+						board.input(
 							self.selected.chip,
 							tile.chip
 						)

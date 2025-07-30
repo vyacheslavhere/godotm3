@@ -92,7 +92,7 @@ func try_fall() -> void:
 			tween.tween_callback(
 				func(): 
 					self.is_busy = false
-					board.enqueue_match(find_match(false))
+					board.enqueue_match(find_match(true))
 			)
 			
 		elif can_fall_left_diag():
@@ -119,7 +119,7 @@ func try_fall() -> void:
 			tween.tween_callback(
 				func(): 
 					self.is_busy = false
-					board.enqueue_match(find_match(false))
+					board.enqueue_match(find_match(true))
 			)
 			
 		elif can_fall_right_diag():
@@ -146,7 +146,7 @@ func try_fall() -> void:
 			tween.tween_callback(
 				func(): 
 					self.is_busy = false
-					board.enqueue_match(find_match(false))
+					board.enqueue_match(find_match(true))
 			)
 
 # find horizontal matchables

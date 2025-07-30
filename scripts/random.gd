@@ -9,8 +9,8 @@ var seeded_randomizer = RandomNumberGenerator.new()
 @export var randomization_groups: Dictionary = {}
 
 # setting up seed
-func init_with_seed(seed: int) -> void:
-	seeded_randomizer.seed = seed
+func _ready() -> void:
+	seeded_randomizer.seed = -620291218619724930
 
 # getting random range
 func range(a: int, b: int) -> int:

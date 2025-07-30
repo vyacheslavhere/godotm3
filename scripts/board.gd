@@ -9,28 +9,27 @@ var level_data: Dictionary = {
 	"tiles": [
 		{ "x": 2, "y": 5, "chip": { "kind": "random", "options": {} }, "is_generator": false },		
 		{ "x": 1, "y": 5, "chip": { "kind": "random", "options": {} }, "is_generator": false },
-		{ "x": 0, "y": 5, "chip": { "kind": "random", "options": {} }, "is_generator": false },
+		{ "x": 0, "y": 5, "chip": { "kind": "yellow_chip", "options": {} }, "is_generator": false },
 		{ "x": 2, "y": 4, "chip": { "kind": "random", "options": {} }, "is_generator": false },		
 		{ "x": 1, "y": 4, "chip": { "kind": "random", "options": {} }, "is_generator": false },
-		{ "x": 0, "y": 4, "chip": { "kind": "random", "options": {} }, "is_generator": false },		
-		{ "x": 2, "y": 3, "chip": { "kind": "random", "options": {} }, "is_generator": false },		
-		{ "x": 1, "y": 3, "chip": { "kind": "random", "options": {} }, "is_generator": false },
-		{ "x": 0, "y": 3, "chip": { "kind": "random", "options": {} }, "is_generator": false },
+		{ "x": 0, "y": 4, "chip": { "kind": "yellow_chip", "options": {} }, "is_generator": false },		
+		{ "x": 2, "y": 3, "chip": { "kind": "red_chip", "options": {} }, "is_generator": false },		
+		{ "x": 1, "y": 3, "chip": { "kind": "red_chip", "options": {} }, "is_generator": false },
+		{ "x": 0, "y": 3, "chip": { "kind": "purple_chip", "options": {} }, "is_generator": false },
 		{ "x": 2, "y": 2, "chip": { "kind": "random", "options": {} }, "is_generator": false },
 		{ "x": 1, "y": 2, "chip": { "kind": "random", "options": {} }, "is_generator": false },
-		{ "x": 0, "y": 2, "chip": { "kind": "random", "options": {} }, "is_generator": false },
+		{ "x": 0, "y": 2, "chip": { "kind": "yellow_chip", "options": {} }, "is_generator": false },
 		{ "x": 2, "y": 1, "chip": { "kind": "random", "options": {} }, "is_generator": false },
 		{ "x": 1, "y": 1, "chip": { "kind": "random", "options": {} }, "is_generator": false },
-		{ "x": 0, "y": 1, "chip": { "kind": "random", "options": {} }, "is_generator": false },
+		{ "x": 0, "y": 1, "chip": { "kind": "red_chip", "options": {} }, "is_generator": false },
 		{ "x": 2, "y": 0, "chip": { "kind": "random", "options": {} }, "is_generator": true },
 		{ "x": 1, "y": 0, "chip": { "kind": "random", "options": {} }, "is_generator": true },
-		{ "x": 0, "y": 0, "chip": { "kind": "random", "options": {} }, "is_generator": true },
+		{ "x": 0, "y": 0, "chip": { "kind": "red_chip", "options": {} }, "is_generator": true },
 	]
 }
 # prefabs
 @export var prefabs: Dictionary
-# defines, is board input
-# is enabled
+# defines, is board ticking
 @export var is_freezed: bool
 # tiles array, contains tiles
 # displayed in a scene
@@ -107,7 +106,9 @@ func _ready() -> void:
 				)
 				tile.chip = chip
 			else:
-				var chip = prefabs[chip_data["kind"]] as Chip
+				var chip = self.instantiate_prefab(
+					chip_data["kind"]
+				) as Chip
 				chip.position = to_point(
 					tile_data['x'],
 					tile_data['y']
@@ -152,65 +153,6 @@ func is_idle():
 				return false
 	return true
 
-# swaps two chips
-func swap_chips(a: Chip, b: Chip):
-	# setting busy
-	a.is_busy = true
-	b.is_busy = true
-	
-	# tiles
-	var tile_a = a.tile
-	var tile_b = b.tile
-	
-	# swapping
-	a.tile = tile_b
-	b.tile = tile_a
-	tile_a.chip = b
-	tile_b.chip = a
-	
-	# visual swapping
-	var tween_a = create_tween()
-	tween_a.set_ease(Tween.EASE_IN_OUT)
-	tween_a.set_trans(Tween.TRANS_QUAD)
-	tween_a.tween_property(a, "position", b.position, swap_tween_duration)	
-	tween_a.tween_callback(
-		func():
-			a.is_busy = false
-			self.enqueue_match(a.find_match(false))
-	)
-	
-	var tween_b = create_tween()
-	tween_b.set_ease(Tween.EASE_IN_OUT)
-	tween_b.set_trans(Tween.TRANS_QUAD)
-	tween_b.tween_property(b, "position", a.position, swap_tween_duration)	
-	tween_b.tween_callback(
-		func():
-			b.is_busy = false
-			self.enqueue_match(b.find_match(false))
-	)
-	
-# fakely swaps two chips
-func fake_swap_chips(a: Chip, b: Chip):
-	# setting busy
-	a.is_busy = true
-	b.is_busy = true
-	
-	# visual fake swapping
-	var tween = create_tween()
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(a, "position", b.position, swap_tween_duration)
-	tween.tween_property(a, "position", a.position, swap_tween_duration)
-	tween.tween_property(b, "position", a.position, swap_tween_duration)
-	tween.tween_property(b, "position", b.position, swap_tween_duration)
-	
-	# callback
-	tween.tween_callback(
-		func():
-			a.is_busy = false
-			b.is_busy = false
-	)
-	
 # checks match is possible
 func check_match(m: Dictionary) -> bool:	
 	if m["source"].chip != null:
@@ -263,8 +205,9 @@ func find_all_matches():
 
 # ticks
 func tick():
-	# waiting for board stability
+	# waiting for board stability and board unfreezing
 	if not is_stable(): return 
+	if is_freezed: return
 	# ticking gravity
 	for tile in self.tiles:
 		tile.tick()
@@ -302,7 +245,58 @@ func tick():
 func enqueue_match(target):
 	if target != null:
 		matches.append(target)
-					
+
+# input
+func input(a: Chip, b: Chip):
+	# setting busy
+	a.is_busy = true
+	b.is_busy = true
+	
+	# tiles
+	var tile_a = a.tile
+	var tile_b = b.tile
+	
+	# swapping
+	a.tile = tile_b
+	b.tile = tile_a
+	tile_a.chip = b
+	tile_b.chip = a
+	
+	# checking matches
+	var match_a = a.find_match(false)
+	var match_b = b.find_match(false)
+	
+	# checking at least one match created
+	if match_a != null or match_b != null:
+		# visual swapping
+		var tween_a = create_tween()
+		tween_a.set_ease(Tween.EASE_IN_OUT)
+		tween_a.set_trans(Tween.TRANS_QUAD)
+		tween_a.tween_property(a, "position", b.position, swap_tween_duration)	
+		tween_a.tween_callback(
+			func():
+				a.is_busy = false
+				self.enqueue_match(match_a)
+		)
+		
+		var tween_b = create_tween()
+		tween_b.set_ease(Tween.EASE_IN_OUT)
+		tween_b.set_trans(Tween.TRANS_QUAD)
+		tween_b.tween_property(b, "position", a.position, swap_tween_duration)	
+		tween_b.tween_callback(
+			func():
+				b.is_busy = false
+				self.enqueue_match(match_b)
+		)
+	# if not, returning old positions back
+	else:
+		a.tile = tile_a
+		b.tile = tile_b
+		tile_a.chip = a
+		tile_b.chip = b
+		a.is_busy = false
+		b.is_busy = false
+
 # tile position to world point
 func to_point(x: int, y: int) -> Vector2:
 	return self.position + Vector2(

@@ -45,6 +45,7 @@ var height: int
 @export var fall_tween_duration: float
 @export var die_tween_duration: float
 @export var die_tween_scale_factor: float
+@export var swap_tween_duration: float
 # matches array, contains matches
 @export var matches: Array
 # randomization
@@ -126,7 +127,7 @@ func instantiate_prefab(name: String) -> Node2D:
 	var node = prefabs[name].instantiate()
 	add_child(node)
 	return node
-	
+
 # gets random chip
 func random_chip() -> String:
 	return random.choice(
@@ -150,9 +151,63 @@ func is_idle():
 			if tile.chip.can_fall():
 				return false
 	return true
+
+# swaps two chips
+func swap_chips(a: Chip, b: Chip):
+	# setting busy
+	a.is_busy = true
+	b.is_busy = true
+	
+	# tiles
+	var tile_a = a.tile
+	var tile_b = b.tile
+	
+	# swapping
+	a.tile = tile_b
+	b.tile = tile_a
+	tile_a.chip = b
+	tile_b.chip = a
+	
+	# visual swapping
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(a, "position", b.position, swap_tween_duration)
+	tween.tween_property(b, "position", a.position, swap_tween_duration)
+		
+	# callback
+	tween.tween_callback(
+		func():
+			a.is_buse = false
+			b.is_busy = false
+			self.enqueue_match(a.find_match(false))
+			self.enqueue_match(a.find_match(false))
+	)
+	
+# fakely swaps two chips
+func fake_swap_chips(a: Chip, b: Chip):
+	# setting busy
+	a.is_busy = true
+	b.is_busy = true
+	
+	# visual fake swapping
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(a, "position", b.position, swap_tween_duration)
+	tween.tween_property(a, "position", a.position, swap_tween_duration)
+	tween.tween_property(b, "position", a.position, swap_tween_duration)
+	tween.tween_property(b, "position", b.position, swap_tween_duration)
+	
+	# callback
+	tween.tween_callback(
+		func():
+			a.is_buse = false
+			b.is_busy = false
+	)
 	
 # checks match is possible
-func check_match(m) -> bool:	
+func check_match(m: Dictionary) -> bool:	
 	if m["source"].chip != null:
 		var tile = m["source"]
 		var chip = tile.chip
@@ -174,7 +229,7 @@ func check_match(m) -> bool:
 	return true
 	
 # checks match is valid
-func check_match_valid(m) -> bool:
+func check_match_valid(m: Dictionary) -> bool:
 	if m["source"].chip == null:
 		return false
 		
@@ -189,7 +244,7 @@ func check_match_valid(m) -> bool:
 	return true
 
 # completes match
-func complete_match(m):
+func complete_match(m: Dictionary):
 	for tile in m["tail"]:
 		tile.delete_chip()
 	m["source"].delete_chip()
@@ -210,7 +265,7 @@ func tick():
 		tile.tick()
 	# ticking matches
 	if matches.size() > 0:
-		# sorting matches
+		# sorting matches by descending of tail size
 		matches.sort_custom(
 			func(a,b):
 				if a['tail'].size() > b['tail'].size():
@@ -220,11 +275,22 @@ func tick():
 		# processing matches
 		var pending = []
 		for m in self.matches:
-			if check_match(m):
-				complete_match(m)
-			elif check_match_valid(m):
-				pending.append(m)
+			# pending (non-player initiated)
+			if m['is_pending']:
+				# if match can be done now, completing it
+				if check_match(m):
+					complete_match(m)
+				# otherwise, if match is valid, pending it 
+				# to the next tick check
+				elif check_match_valid(m):
+					pending.append(m)
+			# player initiated
+			else:
+				if check_match_valid(m):
+					complete_match(m)
+		# clearing matches
 		matches.clear()
+		# appending pending matches
 		matches.append_array(pending)
 
 # enqueues match

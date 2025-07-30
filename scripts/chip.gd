@@ -69,13 +69,19 @@ func try_fall() -> void:
 	if is_busy: return
 	else:
 		if can_fall_down():
+			# setting busy to true
 			self.is_busy = true
-						
+			
+			# setting old tile chip to null
 			self.tile.chip = null
+			# getting under tile
 			var under_tile = self.board.tile_at(tile.x, tile.y + 1)
+			# setting under tile chip to self
 			under_tile.chip = self
+			# setting self tile to under tile
 			self.tile = under_tile
 			
+			# visual tween
 			var tween = create_tween()
 			tween.tween_property(
 				self, 
@@ -88,15 +94,21 @@ func try_fall() -> void:
 					self.is_busy = false
 					board.enqueue_match(find_match(false))
 			)
-						
+			
 		elif can_fall_left_diag():
+			# setting busy to true
 			self.is_busy = true
-
+			
+			# setting old tile chip to null
 			self.tile.chip = null
+			# getting under left tile
 			var under_left_tile = self.board.tile_at(tile.x - 1, tile.y + 1)
+			# setting under left tile chip to self
 			under_left_tile.chip = self
+			# setting self tile to under left tile
 			self.tile = under_left_tile
 			
+			# visual tween
 			var tween = create_tween()
 			tween.tween_property(
 				self, 
@@ -111,13 +123,19 @@ func try_fall() -> void:
 			)
 			
 		elif can_fall_right_diag():
+			# setting busy to true
 			self.is_busy = true
-
+			
+			# setting old tile chip to null
 			self.tile.chip = null
+			# getting under right tile			
 			var under_right_tile = self.board.tile_at(tile.x + 1, tile.y + 1)
+			# setting under right tile chip to self			
 			under_right_tile.chip = self
+			# setting self tile to under right tile			
 			self.tile = under_right_tile
 			
+			# visual tween
 			var tween = create_tween()
 			tween.tween_property(
 				self, 

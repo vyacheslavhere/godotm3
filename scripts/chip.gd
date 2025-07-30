@@ -70,16 +70,19 @@ func try_fall() -> void:
 			under_tile.chip = self
 			self.tile = under_tile
 			
-			var tween = create_tween().set_trans(Tween.TRANS_QUAD)
-			tween.set_ease(Tween.EASE_IN_OUT)
+			var tween = create_tween()
 			tween.tween_property(
 				self, 
 				"position", 
 				under_tile.position, 
 				board.fall_tween_duration
 			)
-			tween.tween_callback(func(): self.is_busy = false)			
-			
+			tween.tween_callback(
+				func(): 
+					self.is_busy = false
+					board.enqueue_match(find_match(false))
+			)
+						
 		elif can_fall_left_diag():
 			self.is_busy = true
 
@@ -88,15 +91,18 @@ func try_fall() -> void:
 			under_left_tile.chip = self
 			self.tile = under_left_tile
 			
-			var tween = create_tween().set_trans(Tween.TRANS_QUAD)
-			tween.set_ease(Tween.EASE_IN_OUT)
+			var tween = create_tween()
 			tween.tween_property(
 				self, 
 				"position", 
 				under_left_tile.position, 
 				board.fall_tween_duration
 			)
-			tween.tween_callback(func(): self.is_busy = false)
+			tween.tween_callback(
+				func(): 
+					self.is_busy = false
+					board.enqueue_match(find_match(false))
+			)
 			
 		elif can_fall_right_diag():
 			self.is_busy = true
@@ -106,35 +112,38 @@ func try_fall() -> void:
 			under_right_tile.chip = self
 			self.tile = under_right_tile
 			
-			var tween = create_tween().set_trans(Tween.TRANS_QUAD)
-			tween.set_ease(Tween.EASE_IN_OUT)
+			var tween = create_tween()
 			tween.tween_property(
 				self, 
 				"position",
 				under_right_tile.position, 
 				board.fall_tween_duration
 			)
-			tween.tween_callback(func(): self.is_busy = false)
+			tween.tween_callback(
+				func(): 
+					self.is_busy = false
+					board.enqueue_match(find_match(false))
+			)
 
 # find horizontal matchables
 func find_horizontal_matchables():
 	var tiles = []
-	for x in range(self.tile.x, self.tile.x + 5):
+	
+	for x in range(self.tile.x + 1, board.width + 1):
+		print('x: ' + str(x))				
 		var tile = self.board.tile_at(x, self.tile.y)
 		if tile == null: break
-		if tile.chip == null: break
-		if tile.chip.is_busy: break
-		if tile.chip.is_busy: break
-		if tile.chip.kind == self.kind: 
-			tiles.append(tile)	
+		if tile.chip == null: break		
+		if tile.chip.kind == self.kind: tiles.append(tile)
+		else: break
 			
-	for x in range(self.tile.x, self.tile.x - 5, -1):
+	for x in range(self.tile.x - 1, -1, -1):
+		print('x: ' + str(x))		
 		var tile = self.board.tile_at(x, self.tile.y)
 		if tile == null: break
-		if tile.chip == null: break
-		if tile.chip.is_busy: break
-		if tile.chip.kind == self.kind: 
-			tiles.append(tile)	
+		if tile.chip == null: break		
+		if tile.chip.kind == self.kind: tiles.append(tile)
+		else: break
 			
 	return tiles	
 
@@ -142,41 +151,46 @@ func find_horizontal_matchables():
 func find_vertical_matchables():
 	var tiles = []
 	
-	for x in range(self.tile.y, self.tile.y + 5):
-		var tile = self.board.tile_at(x, self.tile.y)
+	for y in range(self.tile.y + 1, board.height + 1):
+		var tile = self.board.tile_at(self.tile.x, y)
 		if tile == null: break
-		if tile.chip == null: break
-		if tile.chip.is_busy: break
-		if tile.chip.kind == self.kind: 
-			tiles.append(tile)	
+		if tile.chip == null: break		
+		if tile.chip.kind == self.kind: tiles.append(tile)
+		else: break
 			
-	for x in range(self.tile.y, self.tile.y - 5, -1):
-		var tile = self.board.tile_at(x, self.tile.y)
+	for y in range(self.tile.y - 1, -1, -1):
+		var tile = self.board.tile_at(self.tile.x, y)
 		if tile == null: break
 		if tile.chip == null: break
-		if tile.chip.is_busy: break	
-		if tile.chip.kind == self.kind: 
-			tiles.append(tile)	
+		if tile.chip.kind == self.kind: tiles.append(tile)
+		else: break
 			
 	return tiles		
 
 # find match
-func find_match(pending: bool) -> Dictionary:
-	var horizontal = find_horizontal_matchables()
+func find_match(pending: bool):
+	print("-- finding match --")	
+	print("tile: " + str(self.tile.x) + ", " + str(self.tile.y))
+	print("kind: " + str(self.kind))
+	var horizontal = find_horizontal_matchables()	
 	var vertical = find_vertical_matchables()
-	
 	if horizontal.size() == 4:
-		return {"tail": horizontal, "source": self, "is_pending": pending, "out": "color_bomb"}
+		return {"tail": horizontal, "source": self.tile, "is_pending": pending, "out": "color_bomb"}
 	elif vertical.size() == 4:
-		return {"tail": vertical, "source": self, "is_pending": pending, "out": "color_bomb"}
+		return {"tail": vertical, "source": self.tile, "is_pending": pending, "out": "color_bomb"}
 	elif horizontal.size() == 3:
-		return {"tail": horizontal, "source": self, "is_pending": pending, "out": "horizontal_arrow"}
+		return {"tail": horizontal, "source": self.tile, "is_pending": pending, "out": "horizontal_arrow"}
 	elif vertical.size() == 3:
-		return {"tail": horizontal, "source": self, "is_pending": pending, "out": "vertical_arrow"}
+		return {"tail": vertical, "source": self.tile, "is_pending": pending, "out": "vertical_arrow"}
+	elif horizontal.size() == 2 and vertical.size() == 2:
+		horizontal.append_array(vertical)
+		return {"tail": horizontal, "source": self.tile, "is_pending": pending, "out": "bomb"}
 	elif horizontal.size() == 2:
-		return {"tail": horizontal, "source": self, "is_pending": pending, "out": "empty"}
+		return {"tail": horizontal, "source": self.tile, "is_pending": pending, "out": "empty"}		
 	elif vertical.size() == 2:
-		return {"tail": horizontal, "source": self, "is_pending": pending, "out": "empty"}
+		return {"tail": vertical, "source": self.tile, "is_pending": pending, "out": "empty"}
+	else:
+		return null
 
 # tick
 func tick() -> void:

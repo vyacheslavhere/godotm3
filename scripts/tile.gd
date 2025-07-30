@@ -42,13 +42,17 @@ func generate_chip():
 		board.to_point(x, y), 
 		board.fall_tween_duration
 	)
-	tween.tween_callback(func(): chip.is_busy = false)	
+	tween.tween_callback(
+		func(): 
+			chip.is_busy = false
+			board.enqueue_match(chip.find_match(true))
+	)	
 	
 # tick
 func tick():
 	if chip != null:
 		chip.tick()
-	elif self.is_generator:
+	if chip == null and self.is_generator:
 		generate_chip()
 
 # has stable ceil
@@ -61,6 +65,16 @@ func has_stable_ceil() -> bool:
 		if tile.chip.can_fall(): return false
 	return true
 
+# is flow stable
+func is_flow_stable() -> bool:
+	for y in range(0, board.height):
+		var tile = board.tile_at(x, y)
+		if tile == null: return true
+		if tile.chip == null: continue
+		if tile.chip.is_busy: return false
+		if tile.chip.can_fall(): return false
+	return true
+	
 # deletes chip
 func delete_chip():
 	if !chip.is_busy:

@@ -8,7 +8,7 @@ extends Node2D
 # on swap
 func _on_bomb_swap(with: Chip) -> void:
 	chip.is_busy = true
-	with.tile.delete_chip_immediate()
+	if with != null: with.tile.delete_chip_immediate()
 	chip.board.explode_radius(
 		chip.tile,
 		1

@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://dmvl5o4khavoo"]
+[gd_scene load_steps=5 format=3 uid="uid://dmvl5o4khavoo"]
 
 [ext_resource type="Texture2D" uid="uid://c2d8qei1xq46o" path="res://sprites/chips-02.png" id="1_43w24"]
 [ext_resource type="Script" uid="uid://snb2vfxaphsm" path="res://scripts/chip.gd" id="2_vktcr"]
+[ext_resource type="Script" uid="uid://cq73ygyxy2x2c" path="res://scripts/chips/color.gd" id="3_gfg26"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tdmkg"]
 atlas = ExtResource("1_43w24")
@@ -13,3 +14,10 @@ texture = SubResource("AtlasTexture_tdmkg")
 script = ExtResource("2_vktcr")
 is_fall_enabled = true
 is_swap_enabled = true
+
+[node name="ColorChip" type="Node" parent="." node_paths=PackedStringArray("chip")]
+script = ExtResource("3_gfg26")
+chip = NodePath("..")
+metadata/_custom_type_script = "uid://cq73ygyxy2x2c"
+
+[connection signal="damage" from="." to="ColorChip" method="_on_damage"]

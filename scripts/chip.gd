@@ -13,6 +13,10 @@ var is_busy: bool
 @export var is_swap_enabled: bool
 @export var is_break_arrows: bool
 
+# signals
+signal swap(with: Chip)
+signal damage()
+
 # init
 func init(board: Board, tile: Tile, kind: String):
 	self.board = board

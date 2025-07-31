@@ -45,6 +45,7 @@ var height: int
 @export var die_tween_duration: float
 @export var die_tween_scale_factor: float
 @export var swap_tween_duration: float
+@export var swap_fail_tween_duration: float
 # matches array, contains matches
 @export var matches: Array
 # randomization
@@ -57,12 +58,14 @@ var chip_groups: Dictionary = {
 		"purple_chip",
 		"yellow_chip",
 		"green_chip"
+	],
+	"swaps_with_any": [
+		"bomb",
+		"color_bomb",
+		"vertical_arrow",
+		"horizontal_arrow"
 	]
 }
-
-# signals
-signal on_swap(first: Tile, second: Tile)
-signal on_swap_fail(first: Tile, second: Tile)
 
 # process
 func _process(delta: float) -> void:
@@ -92,33 +95,10 @@ func _ready() -> void:
 		if chip_data["kind"] != "empty":
 			if chip_data["kind"] == "random":
 				var kind = self.random_chip()
-				var chip = self.instantiate_prefab(
-					kind
-				) as Chip
-				chip.position = to_point(
-					tile_data['x'],
-					tile_data['y']
-				)
-				chip.init(
-					self, 
-					tile,
-					kind
-				)
-				tile.chip = chip
+				spawn_chip(kind, tile)
 			else:
-				var chip = self.instantiate_prefab(
-					chip_data["kind"]
-				) as Chip
-				chip.position = to_point(
-					tile_data['x'],
-					tile_data['y']
-				)
-				chip.init(
-					self, 
-					tile, 
-					chip_data["kind"]
-				)
-				tile.chip = chip
+				var kind = self.random_chip()
+				spawn_chip(chip_data['kind'], tile)
 	# find all matches
 	find_all_matches()
 
@@ -190,13 +170,41 @@ func check_match_valid(m: Dictionary) -> bool:
 	
 	return true
 
+# damage chip in tile
+func damage(tile: Tile):
+	if tile.chip != null and !tile.chip.is_busy:
+		tile.chip.damage.emit()
+
+# explode radius
+func explode_radius(target: Tile, radius: int):
+	for x in range(target.x - radius, target.x + radius + 1):
+		for y in range(target.y - radius, target.y + radius + 1):
+			var tile = tile_at(x, y)
+			if tile != null:
+				damage(tile)
+
+# spawn chip
+func spawn_chip(kind: String, tile: Tile):
+	var chip = instantiate_prefab(
+		kind
+	) as Chip
+	chip.init(self, tile, kind)
+	chip.position = tile.position
+	tile.chip = chip
+
 # completes match
 func complete_match(m: Dictionary):
+	# deleting old chips
 	for tile in m["tail"]:
 		tile.delete_chip()
-	m["source"].delete_chip()
-	# todo: add out handle
-
+	# if nothing out, deleting chip
+	if m["out"] == "empty":
+		m["source"].delete_chip()
+	# else
+	else:
+		m["source"].delete_chip_immediate()
+		spawn_chip(m["out"], m["source"])
+		
 # finds all matches on the board
 func find_all_matches():
 	for tile in tiles:
@@ -246,6 +254,54 @@ func enqueue_match(target):
 	if target != null:
 		matches.append(target)
 
+# visual swap
+func visual_swap(a: Chip, b: Chip, match_a, match_b):
+	# visual swapping
+	var tween_a = create_tween()
+	tween_a.set_ease(Tween.EASE_IN_OUT)
+	tween_a.set_trans(Tween.TRANS_QUAD)
+	tween_a.tween_property(a, "position", b.position, swap_tween_duration)	
+	tween_a.tween_callback(
+		func():
+			a.is_busy = false
+			a.swap.emit(b)
+			self.enqueue_match(match_a)
+	)
+	
+	var tween_b = create_tween()
+	tween_b.set_ease(Tween.EASE_IN_OUT)
+	tween_b.set_trans(Tween.TRANS_QUAD)
+	tween_b.tween_property(b, "position", a.position, swap_tween_duration)	
+	tween_b.tween_callback(
+		func():
+			b.is_busy = false
+			b.swap.emit(a)
+			self.enqueue_match(match_b)
+	)
+
+# visual swap fail
+func visual_swap_fail(a: Chip, b: Chip):
+	# visual swap fail
+	var tween_a = create_tween()
+	tween_a.set_ease(Tween.EASE_IN_OUT)
+	tween_a.set_trans(Tween.TRANS_QUAD)
+	tween_a.tween_property(a, "position", b.position, swap_fail_tween_duration)
+	tween_a.tween_property(a, "position", a.position, swap_fail_tween_duration)
+	tween_a.tween_callback(
+		func():
+			a.is_busy = false
+	)
+	
+	var tween_b = create_tween()
+	tween_b.set_ease(Tween.EASE_IN_OUT)
+	tween_b.set_trans(Tween.TRANS_QUAD)
+	tween_b.tween_property(b, "position", a.position, swap_fail_tween_duration)
+	tween_b.tween_property(b, "position", b.position, swap_fail_tween_duration)
+	tween_b.tween_callback(
+		func():
+			b.is_busy = false
+	)
+
 # input
 func input(a: Chip, b: Chip):
 	# setting busy
@@ -266,36 +322,25 @@ func input(a: Chip, b: Chip):
 	var match_a = a.find_match(false)
 	var match_b = b.find_match(false)
 	
+	# if swaps with any
+	if a.kind in chip_groups["swaps_with_any"] or b.kind in chip_groups["swaps_with_any"]:
+		# swapping
+		visual_swap(a, b, match_a, match_b)
 	# checking at least one match created
-	if match_a != null or match_b != null:
-		# visual swapping
-		var tween_a = create_tween()
-		tween_a.set_ease(Tween.EASE_IN_OUT)
-		tween_a.set_trans(Tween.TRANS_QUAD)
-		tween_a.tween_property(a, "position", b.position, swap_tween_duration)	
-		tween_a.tween_callback(
-			func():
-				a.is_busy = false
-				self.enqueue_match(match_a)
-		)
-		
-		var tween_b = create_tween()
-		tween_b.set_ease(Tween.EASE_IN_OUT)
-		tween_b.set_trans(Tween.TRANS_QUAD)
-		tween_b.tween_property(b, "position", a.position, swap_tween_duration)	
-		tween_b.tween_callback(
-			func():
-				b.is_busy = false
-				self.enqueue_match(match_b)
-		)
+	elif match_a != null or match_b != null:
+		# visual swap
+		visual_swap(a, b, match_a, match_b)
 	# if not, returning old positions back
 	else:
+		# turning back swap
 		a.tile = tile_a
 		b.tile = tile_b
 		tile_a.chip = a
 		tile_b.chip = b
 		a.is_busy = false
 		b.is_busy = false
+		# visual swap fail
+		visual_swap_fail(a, b)
 
 # tile position to world point
 func to_point(x: int, y: int) -> Vector2:

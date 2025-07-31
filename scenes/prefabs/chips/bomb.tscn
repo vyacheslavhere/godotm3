@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://drll6mf8t3hqa"]
+
+[ext_resource type="Texture2D" uid="uid://c2d8qei1xq46o" path="res://sprites/chips-02.png" id="1_pt1q0"]
+[ext_resource type="Script" uid="uid://snb2vfxaphsm" path="res://scripts/chip.gd" id="2_qnf20"]
+[ext_resource type="Script" uid="uid://bdfyefh0hynry" path="res://scripts/chips/bomb.gd" id="3_qnf20"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_10vw2"]
+atlas = ExtResource("1_pt1q0")
+region = Rect2(324, 42, 283, 283)
+
+[node name="Bomb" type="Sprite2D"]
+scale = Vector2(0.184217, 0.184217)
+texture = SubResource("AtlasTexture_10vw2")
+script = ExtResource("2_qnf20")
+is_fall_enabled = true
+is_swap_enabled = true
+
+[node name="BombChip" type="Node2D" parent="." node_paths=PackedStringArray("chip")]
+script = ExtResource("3_qnf20")
+chip = NodePath("..")
+metadata/_custom_type_script = "uid://bdfyefh0hynry"
+
+[connection signal="damage" from="." to="BombChip" method="_on_bomb_damage"]
+[connection signal="swap" from="." to="BombChip" method="_on_bomb_swap"]

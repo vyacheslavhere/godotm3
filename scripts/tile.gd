@@ -93,3 +93,8 @@ func delete_chip():
 				chip.queue_free()
 				chip = null	
 		)
+	
+# deletes chip immediate
+func delete_chip_immediate():
+	chip.queue_free()
+	chip = null	

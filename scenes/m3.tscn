@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://co7nhextgax2s"]
+[gd_scene load_steps=11 format=3 uid="uid://co7nhextgax2s"]
 
 [ext_resource type="Script" uid="uid://bl0h80uan17ny" path="res://scripts/board.gd" id="1_1va2j"]
 [ext_resource type="PackedScene" uid="uid://bglwhn14ct0ts" path="res://scenes/prefabs/tile.tscn" id="2_ikrw4"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dlijrfienlpwd" path="res://scenes/prefabs/chips/red.tscn" id="6_k5j23"]
 [ext_resource type="PackedScene" uid="uid://dmvl5o4khavoo" path="res://scenes/prefabs/chips/yellow.tscn" id="7_4ohyr"]
 [ext_resource type="Script" uid="uid://cs4vqqbjjced4" path="res://scripts/random.gd" id="8_o24bc"]
+[ext_resource type="PackedScene" uid="uid://drll6mf8t3hqa" path="res://scenes/prefabs/chips/bomb.tscn" id="8_u36m5"]
 [ext_resource type="Script" uid="uid://bbpg716mwl40m" path="res://scripts/input.gd" id="9_604la"]
 
 [node name="M3" type="Node2D"]
@@ -16,10 +17,14 @@
 script = ExtResource("1_1va2j")
 prefabs = {
 "blue_chip": ExtResource("3_o24bc"),
+"bomb": ExtResource("8_u36m5"),
+"color_bomb": ExtResource("8_u36m5"),
 "green_chip": ExtResource("4_604la"),
+"horizontal_arrow": ExtResource("8_u36m5"),
 "purple_chip": ExtResource("5_u36m5"),
 "red_chip": ExtResource("6_k5j23"),
 "tile": ExtResource("2_ikrw4"),
+"vertical_arrow": ExtResource("8_u36m5"),
 "yellow_chip": ExtResource("7_4ohyr")
 }
 board_offset = Vector2(500, 250)
@@ -28,6 +33,7 @@ fall_tween_duration = 0.125
 die_tween_duration = 0.075
 die_tween_scale_factor = 0.8
 swap_tween_duration = 0.125
+swap_fail_tween_duration = 0.2
 
 [node name="BoardInput" type="Node2D" parent="Board"]
 script = ExtResource("9_604la")

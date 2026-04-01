@@ -5,6 +5,9 @@ extends Node2D
 # Bomb chip
 @export var chip: Chip
 
+# Animation player
+@onready var animator: AnimationPlayer = $"../AnimationPlayer"
+
 # On bomb swap
 func _on_bomb_swap(with: Chip) -> void:
 	# If chip is busy
@@ -30,3 +33,7 @@ func _on_bomb_damage() -> void:
 		1
 	)
 	chip.tile.delete_chip_immediate()	
+
+# On bomb ready
+func _on_ready() -> void:
+	self.animator.play("bomb_idle")

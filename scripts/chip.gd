@@ -2,28 +2,30 @@
 class_name Chip
 extends Node2D
 
-# tile
+# Board and tile
 var board: Board
 var tile: Tile
+
+# Chip info
 var kind: String
 var is_busy: bool
 
-# settings
+# Chip settings
 @export var is_fall_enabled: bool
 @export var is_swap_enabled: bool
 @export var is_break_arrows: bool
 
-# signals
+# Chip signals
 signal swap(with: Chip)
 signal damage()
 
-# init
+# Initializes chips
 func init(board: Board, tile: Tile, kind: String):
 	self.board = board
 	self.tile = tile
 	self.kind = kind
 
-# can fall down
+# Is chip can fall down?
 func can_fall_down() -> bool:
 	var tile = board.tile_at(tile.x, tile.y + 1)
 	if tile != null:
@@ -31,7 +33,7 @@ func can_fall_down() -> bool:
 	else:
 		return false
 
-# can fall left diag
+# Is chip can fall left diag?
 func can_fall_left_diag() -> bool:
 	if is_busy: return false
 	else:
@@ -41,7 +43,7 @@ func can_fall_left_diag() -> bool:
 		if under_left.chip == null and under_left.has_stable_ceil(): return true
 		return false
 
-# can fall right diag
+# Is chip can fall right diag?
 func can_fall_right_diag() -> bool:
 	if is_busy: return false
 	else:
@@ -51,7 +53,7 @@ func can_fall_right_diag() -> bool:
 		if under_right.chip == null and under_right.has_stable_ceil(): return true
 		return false		
 			
-# can fall diag
+# Is chip can fall diag?
 func can_fall_diag() -> bool:
 	if is_busy: return false
 	else:
@@ -59,7 +61,7 @@ func can_fall_diag() -> bool:
 		elif can_fall_right_diag(): return true
 		else: return false
 		
-# can fall
+# Is chip can fall?
 func can_fall() -> bool:
 	if is_busy: return false
 	else:
@@ -67,93 +69,75 @@ func can_fall() -> bool:
 		elif can_fall_diag(): return true
 		else: return false
 
-# falls, if can
+# Falls to point visual
+func visual_fall_to(point: Vector2):
+	# Visual tween
+	var tween = create_tween()
+	tween.tween_property(
+		self, 
+		"position", 
+		point, 
+		board.fall_tween_duration
+	)
+	tween.tween_callback(
+		func(): 
+			self.is_busy = false
+			board.enqueue_match(find_match(true))
+	)
+
+# Falls to tile
+func fall_to(tile: Tile):
+	# Setting chip business to true
+	self.is_busy = true
+	
+	# If tile is same
+	if self.tile == tile:
+		# Nothing to do
+		return
+	
+	# If tile is set
+	if self.tile != null:
+		# Resetting tile chip
+		self.tile.chip = null
+
+	# Setting tile chip to self
+	tile.chip = self
+
+	# Setting self tile
+	self.tile = tile
+	
+	# Visual tween
+	self.visual_fall_to(tile.position)
+
+# Performs fall if chip can do that
 func try_fall() -> void:
 	if !is_fall_enabled: return
 	if is_busy: return
 	else:
+		# If chip can fall down
 		if can_fall_down():
-			# setting busy to true
-			self.is_busy = true
-			
-			# setting old tile chip to null
-			self.tile.chip = null
-			# getting under tile
+			# Getting under tile
 			var under_tile = self.board.tile_at(tile.x, tile.y + 1)
-			# setting under tile chip to self
-			under_tile.chip = self
-			# setting self tile to under tile
-			self.tile = under_tile
 			
-			# visual tween
-			var tween = create_tween()
-			tween.tween_property(
-				self, 
-				"position", 
-				under_tile.position, 
-				board.fall_tween_duration
-			)
-			tween.tween_callback(
-				func(): 
-					self.is_busy = false
-					board.enqueue_match(find_match(true))
-			)
+			# Falling to under tile
+			self.fall_to(under_tile)
 			
+		# If chip can fall diag to left
 		elif can_fall_left_diag():
-			# setting busy to true
-			self.is_busy = true
-			
-			# setting old tile chip to null
-			self.tile.chip = null
-			# getting under left tile
+			# Getting under left tile
 			var under_left_tile = self.board.tile_at(tile.x - 1, tile.y + 1)
-			# setting under left tile chip to self
-			under_left_tile.chip = self
-			# setting self tile to under left tile
-			self.tile = under_left_tile
 			
-			# visual tween
-			var tween = create_tween()
-			tween.tween_property(
-				self, 
-				"position", 
-				under_left_tile.position, 
-				board.fall_tween_duration
-			)
-			tween.tween_callback(
-				func(): 
-					self.is_busy = false
-					board.enqueue_match(find_match(true))
-			)
+			# Falling to under left tile
+			self.fall_to(under_left_tile)
 			
 		elif can_fall_right_diag():
-			# setting busy to true
-			self.is_busy = true
-			
-			# setting old tile chip to null
-			self.tile.chip = null
-			# getting under right tile			
+			# Getting under right tile
 			var under_right_tile = self.board.tile_at(tile.x + 1, tile.y + 1)
-			# setting under right tile chip to self			
-			under_right_tile.chip = self
-			# setting self tile to under right tile			
-			self.tile = under_right_tile
 			
-			# visual tween
-			var tween = create_tween()
-			tween.tween_property(
-				self, 
-				"position",
-				under_right_tile.position, 
-				board.fall_tween_duration
-			)
-			tween.tween_callback(
-				func(): 
-					self.is_busy = false
-					board.enqueue_match(find_match(true))
-			)
+			# Falling to under left tile
+			self.fall_to(under_right_tile)
 
-# find horizontal matchables
+# Finds horizontal matchables
 func find_horizontal_matchables():
 	var tiles = []
 	
@@ -173,7 +157,7 @@ func find_horizontal_matchables():
 			
 	return tiles	
 
-# find horizontal matchables
+# Finds vertical matchables
 func find_vertical_matchables():
 	var tiles = []
 	
@@ -193,7 +177,7 @@ func find_vertical_matchables():
 			
 	return tiles		
 
-# find match
+# Finds match
 func find_match(pending: bool):
 	if self.kind not in board.chip_groups['chips']: return
 	
@@ -218,6 +202,6 @@ func find_match(pending: bool):
 	else:
 		return null
 
-# tick
+# Ticks chip
 func tick() -> void:
 	try_fall()

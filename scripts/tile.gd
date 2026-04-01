@@ -2,60 +2,58 @@
 class_name Tile
 extends Node2D
 
-# fields
+# Tile position
 var x: int = 0
 var y: int = 0
+
+# Chip and board
 var chip: Chip = null
 var board: Board = null
+
+# Is this tile a generator?
 var is_generator: bool = false
 
-# init
+# Initializes tile
 func init(board: Board, x: int, y: int, is_generator: bool):
 	self.board = board
 	self.x = x
 	self.y = y
 	self.is_generator = is_generator
 	
-# generate
+# Generates chip on tile
 func generate_chip():
+	# Generating random chip
 	var kind = board.random_chip()
 	var chip = board.instantiate_prefab(
 		kind
 	) as Chip
 	
+	# Initializing chip
 	chip.init(
 		board, 
 		self,
 		kind
 	)
 	self.chip = chip
-	
 	chip.is_busy = true	
 	
+	# Moving chip to point
 	chip.position = board.to_point(x, y - 1)
 	
-	var tween = create_tween().set_trans(Tween.TRANS_QUAD)
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(
-		chip, 
-		"position", 
-		board.to_point(x, y), 
-		board.fall_tween_duration
-	)
-	tween.tween_callback(
-		func(): 
-			chip.is_busy = false
-			board.enqueue_match(chip.find_match(true))
-	)	
+	# Visual falling to point
+	chip.visual_fall_to(board.to_point(x, y))
 	
-# tick
+# Ticks tile
 func tick():
+	# If chip is not null: ticking chip
 	if chip != null:
 		chip.tick()
+		
+	# If no chip on tile and tile is generator: generating chip
 	if chip == null and self.is_generator:
 		generate_chip()
 
-# has stable ceil
+# Is tile has stable ceil?
 func has_stable_ceil() -> bool:
 	for y in range(y, -1, -1):
 		var tile = board.tile_at(x, y)

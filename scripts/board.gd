@@ -2,7 +2,7 @@
 class_name Board
 extends Node2D
 
-# the level data
+# Test level data
 var level_data: Dictionary = {
 	"width": 3,
 	"height": 6,
@@ -27,30 +27,38 @@ var level_data: Dictionary = {
 		{ "x": 0, "y": 0, "chip": { "kind": "random", "options": {} }, "is_generator": true },
 	]
 }
-# prefabs
+
+# All chips prefabs
 @export var prefabs: Dictionary
-# defines, is board ticking
+
+# Is board freezed?
 @export var is_freezed: bool
-# tiles array, contains tiles
-# displayed in a scene
-@export var tiles: Array
-# width and height
+
+# Tiles array, contains all the board tiles
+@export var tiles: Array[Tile]
+
+# Width and height
 var width: int
 var height: int
-# offsets
+
+# Board offsets
 @export var board_offset: Vector2
 @export var cell_offset: Vector2
-# tween durations
+
+# Tween durations
 @export var fall_tween_duration: float
 @export var die_tween_duration: float
 @export var die_tween_scale_factor: float
 @export var swap_tween_duration: float
 @export var swap_fail_tween_duration: float
-# matches array, contains matches
-@export var matches: Array
-# randomization
+
+# Found matches array
+@export var matches: Array[Variant]
+
+# Seeded random
 @onready var random: Random = $Random
-# chip groups
+
+# Chip groups
 var chip_groups: Dictionary = {
 	"chips": [
 		"blue_chip",
@@ -67,11 +75,11 @@ var chip_groups: Dictionary = {
 	]
 }
 
-# process
+# Ticks every frame
 func _process(delta: float) -> void:
 	tick()
 
-# ready function
+# Initializes board on start
 func _ready() -> void:
 	# init level
 	self.width = self.level_data['width']
@@ -102,20 +110,20 @@ func _ready() -> void:
 	# find all matches
 	find_all_matches()
 
-# creates prefab instance
+# Ccreates prefab instance
 func instantiate_prefab(name: String) -> Node2D:
 	assert(prefabs.has(name), "no prefab named: " + name)
 	var node = prefabs[name].instantiate()
 	add_child(node)
 	return node
 
-# gets random chip
+# Gets random chip
 func random_chip() -> String:
 	return random.choice(
 		chip_groups['chips']
 	)
 
-# returns is all chips are not busy
+# Returns true if all chips are not busy
 func is_stable():
 	for tile in self.tiles:
 		if tile.chip != null:
@@ -123,7 +131,7 @@ func is_stable():
 				return false
 	return true
 
-# returns is all chips are not busy and can't fall
+# Returns true if all chips are not busy and can't fall
 func is_idle():
 	for tile in self.tiles:
 		if tile.chip != null:
@@ -133,8 +141,9 @@ func is_idle():
 				return false
 	return true
 
-# checks match is possible
-func check_match(m: Dictionary) -> bool:	
+# Checks match is possible
+func check_match_possibility(m: Dictionary) -> bool:
+	# Checking source chip exists and this chip can't fall and it's tile has stable flow
 	if m["source"].chip != null:
 		var tile = m["source"]
 		var chip = tile.chip
@@ -142,7 +151,8 @@ func check_match(m: Dictionary) -> bool:
 			return false
 	else:
 		return false
-		
+	
+	# Checking tail chips existence and that chips can't fall and it's tiles has stable flow
 	for tile in m["tail"]:
 		if tile.chip != null:
 			var chip = tile.chip
@@ -155,27 +165,33 @@ func check_match(m: Dictionary) -> bool:
 	
 	return true
 	
-# checks match is valid
+# Checks match is valid
 func check_match_valid(m: Dictionary) -> bool:
+	# If source has no chip -> match is not valid
 	if m["source"].chip == null:
 		return false
 		
+	# Checking tail tiles
 	for tile in m["tail"]:
+		# If tile has chip
 		if tile.chip != null:
+			# If tail chip kind is not a source chip kind -> match is not valid
 			var chip = tile.chip
 			if chip.kind != m["source"].chip.kind:
 				return false
+				
+		# If tile has no chip
 		else:
 			return false
 	
 	return true
 
-# damage chip in tile
+# Damages chip on tile
 func damage(tile: Tile):
 	if tile.chip != null and !tile.chip.is_busy:
 		tile.chip.damage.emit()
 
-# explode radius
+# Performs radial explosion
 func explode_radius(target: Tile, radius: int):
 	for x in range(target.x - radius, target.x + radius + 1):
 		for y in range(target.y - radius, target.y + radius + 1):
@@ -183,7 +199,7 @@ func explode_radius(target: Tile, radius: int):
 			if tile != null:
 				damage(tile)
 
-# spawn chip
+# Spawns chip with kind on tile
 func spawn_chip(kind: String, tile: Tile):
 	var chip = instantiate_prefab(
 		kind
@@ -192,71 +208,90 @@ func spawn_chip(kind: String, tile: Tile):
 	chip.position = tile.position
 	tile.chip = chip
 
-# completes match
+# Completes match
 func complete_match(m: Dictionary):
-	# deleting old chips
+	# Deleting tail chips
 	for tile in m["tail"]:
 		tile.delete_chip()
-	# if nothing out, deleting chip
+		
+	# If nothing out, deleting source chip
 	if m["out"] == "empty":
 		m["source"].delete_chip()
-	# else
+		
+	# Else deleting source chip and spawning needed out chip
 	else:
 		m["source"].delete_chip_immediate()
 		spawn_chip(m["out"], m["source"])
 		
-# finds all matches on the board
+# Finds all matches on the board
 func find_all_matches():
 	for tile in tiles:
 		if tile.chip != null and !tile.chip.is_busy:
 			enqueue_match(tile.chip.find_match(true))
 
-# ticks
-func tick():
-	# waiting for board stability and board unfreezing
-	if not is_stable(): return 
-	if is_freezed: return
-	# ticking gravity
-	for tile in self.tiles:
-		tile.tick()
-	# ticking matches
+# Ticks all the matches
+func tick_matches():
+	# If at least one match created
 	if matches.size() > 0:
-		# sorting matches by descending of tail size
+		# Sorting matches by descending of tail size
 		matches.sort_custom(
 			func(a,b):
 				if a['tail'].size() > b['tail'].size():
 					return true
 				return false
 		)
-		# processing matches
+		
+		# Processing matches
 		var pending = []
 		for m in self.matches:
-			# pending (non-player initiated)
+			# Pending matches (non-player initiated)
 			if m['is_pending']:
-				# if match can be done now, completing it
-				if check_match(m):
+				# If match can be done now, completing it
+				if check_match_possibility(m):
 					complete_match(m)
-				# otherwise, if match is valid, pending it 
+					
+				# Otherwise, if match is valid, pending it 
 				# to the next tick check
 				elif check_match_valid(m):
 					pending.append(m)
-			# player initiated
+					
+			# Playing initiated matches
 			else:
 				if check_match_valid(m):
 					complete_match(m)
-		# clearing matches
+					
+		# Clearing matches
 		matches.clear()
-		# appending pending matches
+		
+		# Appending pending matches
 		matches.append_array(pending)
 
-# enqueues match
+# Ticks all the board
+func tick():
+	# Waiting for board stability and board unfreezing
+	if not is_stable(): return 
+	if is_freezed: return
+	
+	# Ticking only generator-tiles: generation
+	for tile in self.tiles:
+		if tile.is_generator:
+			tile.tick()
+			
+	# Ticking all the tiles: gravity
+	for tile in self.tiles:
+		tile.tick()
+		
+	# Ticking matches
+	self.tick_matches()
+
+# Enqueues match
 func enqueue_match(target):
 	if target != null:
 		matches.append(target)
 
-# visual swap
+# Creates visual swap
 func visual_swap(a: Chip, b: Chip, match_a, match_b):
-	# visual swapping
+	# Tween `a`
 	var tween_a = create_tween()
 	tween_a.set_ease(Tween.EASE_IN_OUT)
 	tween_a.set_trans(Tween.TRANS_QUAD)
@@ -268,6 +303,7 @@ func visual_swap(a: Chip, b: Chip, match_a, match_b):
 			self.enqueue_match(match_a)
 	)
 	
+	# Tween `b`
 	var tween_b = create_tween()
 	tween_b.set_ease(Tween.EASE_IN_OUT)
 	tween_b.set_trans(Tween.TRANS_QUAD)
@@ -279,9 +315,9 @@ func visual_swap(a: Chip, b: Chip, match_a, match_b):
 			self.enqueue_match(match_b)
 	)
 
-# visual swap fail
+# Creates visual swap fail
 func visual_swap_fail(a: Chip, b: Chip):
-	# visual swap fail
+	# Tween `a`
 	var tween_a = create_tween()
 	tween_a.set_ease(Tween.EASE_IN_OUT)
 	tween_a.set_trans(Tween.TRANS_QUAD)
@@ -292,6 +328,7 @@ func visual_swap_fail(a: Chip, b: Chip):
 			a.is_busy = false
 	)
 	
+	# Tween `b`
 	var tween_b = create_tween()
 	tween_b.set_ease(Tween.EASE_IN_OUT)
 	tween_b.set_trans(Tween.TRANS_QUAD)
@@ -302,47 +339,50 @@ func visual_swap_fail(a: Chip, b: Chip):
 			b.is_busy = false
 	)
 
-# input
+# Performs input action
 func input(a: Chip, b: Chip):
-	# setting busy
+	# Setting both chips business to true
 	a.is_busy = true
 	b.is_busy = true
 	
-	# tiles
+	# Getting chip tiles
 	var tile_a = a.tile
 	var tile_b = b.tile
 	
-	# swapping
+	# Swapping tiles
 	a.tile = tile_b
 	b.tile = tile_a
 	tile_a.chip = b
 	tile_b.chip = a
 	
-	# checking matches
+	# Checking matches
 	var match_a = a.find_match(false)
 	var match_b = b.find_match(false)
 	
-	# if swaps with any
+	# If swaps with any
 	if a.kind in chip_groups["swaps_with_any"] or b.kind in chip_groups["swaps_with_any"]:
-		# swapping
+		# Swapping
 		visual_swap(a, b, match_a, match_b)
-	# checking at least one match created
+		
+	# Otherwise, checking at least one match created
 	elif match_a != null or match_b != null:
-		# visual swap
+		# Swapping
 		visual_swap(a, b, match_a, match_b)
-	# if not, returning old positions back
+		
+	# If not, returning old positions back
 	else:
-		# turning back swap
+		# Turning back tiles and chips states
 		a.tile = tile_a
 		b.tile = tile_b
 		tile_a.chip = a
 		tile_b.chip = b
 		a.is_busy = false
 		b.is_busy = false
-		# visual swap fail
+		
+		# Visual swap fail
 		visual_swap_fail(a, b)
 
-# tile position to world point
+# Converts tile position to world point
 func to_point(x: int, y: int) -> Vector2:
 	return self.position + Vector2(
 		x + cell_offset.x * x,
@@ -352,7 +392,7 @@ func to_point(x: int, y: int) -> Vector2:
 		board_offset.y
 	)
 
-# gets tile at coords
+# Gets tile at coords
 func tile_at(x: int, y: int) -> Tile:
 	for tile in tiles:
 		if tile.x == x and tile.y == y:

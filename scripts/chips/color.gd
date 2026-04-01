@@ -5,6 +5,6 @@ extends Node
 # chip
 @export var chip: Chip
 
-# on damage
+# On damage
 func _on_damage() -> void:
 	chip.tile.delete_chip()

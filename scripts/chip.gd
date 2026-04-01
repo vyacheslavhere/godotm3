@@ -1,4 +1,4 @@
-# chip class
+# Chip class
 class_name Chip
 extends Node2D
 
@@ -205,3 +205,7 @@ func find_match(pending: bool):
 # Ticks chip
 func tick() -> void:
 	try_fall()
+
+# Is chip can be safely shuffled?
+func can_be_shuffled() -> bool:
+	return true

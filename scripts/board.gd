@@ -81,7 +81,10 @@ func _process(delta: float) -> void:
 
 # Initializes board on start
 func _ready() -> void:
-	# init level
+	# Logging board init
+	print("[board] initializing board...")
+
+	# Initializing level
 	self.width = self.level_data['width']
 	self.height = self.level_data['height']
 	for tile_data in self.level_data['tiles']:
@@ -107,8 +110,13 @@ func _ready() -> void:
 			else:
 				var kind = self.random_chip()
 				spawn_chip(chip_data['kind'], tile)
-	# find all matches
+				
+	# Finding all the matches
 	find_all_matches()
+	
+	# Logging board init completed
+	print("[board] board initialization completed")
+
 
 # Ccreates prefab instance
 func instantiate_prefab(name: String) -> Node2D:
@@ -398,3 +406,55 @@ func tile_at(x: int, y: int) -> Tile:
 		if tile.x == x and tile.y == y:
 			return tile
 	return null		
+
+# Is board has possible moves?
+func has_possible_moves() -> bool:
+	# If not idle -> true
+	if !is_idle(): return true
+	
+	# Freezing board before iterating
+	self.is_freezed = true
+	
+	# Iterating over tiles with temp
+	for tile in tiles:
+		if tile.chip == null: continue
+		if !tile.chip.is_swap_enabled: continue
+		
+		# Checking right and down neighbors
+		for offset in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var neighbor = tile_at(tile.x + offset.x, tile.y + offset.y)
+			if neighbor == null or neighbor.chip == null: continue
+			if !neighbor.chip.is_swap_enabled: continue
+			
+			# Checking swap gives match
+			if _swap_gives_match(tile, neighbor):
+				
+				# Unfreezing board and returning true
+				self.is_freezed = false
+				return true
+	
+	# Unfreezing board and returning false
+	self.is_freezed = true
+	return false
+
+# Is swap gives match?
+func _swap_gives_match(tile_a: Tile, tile_b: Tile) -> bool:
+	# Temporally swapping chips
+	var chip_a = tile_a.chip
+	var chip_b = tile_b.chip
+	tile_a.chip = chip_b
+	tile_b.chip = chip_a
+	chip_a.tile = tile_b
+	chip_b.tile = tile_a
+	
+	# Checking at least one match found or item can swap with any
+	var result = chip_a.find_match(false) != null or chip_b.find_match(false) != null
+	result = result or chip_a.kind in chip_groups["swaps_with_any"] or chip_b.kind in chip_groups["swaps_with_any"] 
+	
+	# Turning swapped chips back
+	tile_a.chip = chip_a
+	tile_b.chip = chip_b
+	chip_a.tile = tile_a
+	chip_b.tile = tile_b
+	
+	return result

@@ -1,4 +1,4 @@
-# tile class
+# Tile class
 class_name Tile
 extends Node2D
 

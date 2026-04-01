@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://cs4vqqbjjced4" path="res://scripts/random.gd" id="8_o24bc"]
 [ext_resource type="PackedScene" uid="uid://drll6mf8t3hqa" path="res://scenes/prefabs/chips/bomb.tscn" id="8_u36m5"]
 [ext_resource type="Script" uid="uid://bbpg716mwl40m" path="res://scripts/input.gd" id="9_604la"]
+[ext_resource type="Script" uid="uid://bg8xyr3uqyoxf" path="res://scripts/shuffler.gd" id="11_k5j23"]
 
 [node name="M3" type="Node2D" unique_id=1046336695]
 
@@ -42,3 +43,9 @@ metadata/_custom_type_script = "uid://bbpg716mwl40m"
 [node name="Random" type="Node" parent="Board" unique_id=697911961]
 script = ExtResource("8_o24bc")
 metadata/_custom_type_script = "uid://cs4vqqbjjced4"
+
+[node name="Shuffler" type="Timer" parent="Board" unique_id=78848330]
+autostart = true
+script = ExtResource("11_k5j23")
+
+[connection signal="timeout" from="Board/Shuffler" to="Board/Shuffler" method="_on_timeout"]

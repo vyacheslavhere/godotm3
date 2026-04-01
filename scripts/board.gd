@@ -447,9 +447,14 @@ func _swap_gives_match(tile_a: Tile, tile_b: Tile) -> bool:
 	chip_a.tile = tile_b
 	chip_b.tile = tile_a
 	
-	# Checking at least one match found or item can swap with any
+	# Checking at least one match found
 	var result = chip_a.find_match(false) != null or chip_b.find_match(false) != null
-	result = result or chip_a.kind in chip_groups["swaps_with_any"] or chip_b.kind in chip_groups["swaps_with_any"] 
+	
+	# Checking that chip `a` can swap with any `b` that is swap enabled
+	result = result or (chip_a.kind in chip_groups["swaps_with_any"] and chip_b.is_swap_enabled)
+	
+	# Checking that chip `b` can swap with any `a` that is swap enabled
+	result = result or (chip_b.kind in chip_groups["swaps_with_any"] and chip_a.is_swap_enabled)
 	
 	# Turning swapped chips back
 	tile_a.chip = chip_a

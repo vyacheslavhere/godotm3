@@ -111,8 +111,11 @@ func fall_to(tile: Tile):
 
 # Performs fall if chip can do that
 func try_fall() -> void:
+	# If chip is busy or fall is disabled -> nothing to do
 	if !is_fall_enabled: return
 	if is_busy: return
+	
+	# If fall is enabled and chip isn't busy -> trying to fall
 	else:
 		# If chip can fall down
 		if can_fall_down():
